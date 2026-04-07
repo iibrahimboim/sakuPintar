@@ -1,4 +1,5 @@
-const BASE_URL = 'https://sakupintar-production.up.railway.app/api';
+// Configure via `.env` (VITE_API_BASE_URL). Defaults to Vite dev proxy `/api`.
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 
 function getToken() {
   return localStorage.getItem('token');
@@ -12,8 +13,13 @@ async function request(path, options = {}) {
     ...options.headers,
   };
   const res = await fetch(`${BASE_URL}${path}`, { ...options, headers });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.message || 'Request failed');
+  let data = null;
+  try {
+    data = await res.json();
+  } catch {
+    // Non-JSON response (or empty body)
+  }
+  if (!res.ok) throw new Error(data?.message || 'Request failed');
   return data;
 }
 

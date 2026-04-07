@@ -11,6 +11,13 @@ export default function AuthPage() {
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
+  const handleDemo = () => {
+    login(
+      { id: 'demo', name: 'Demo User', email: 'demo@sakupintar.local', total_balance: 2500000, limit: 5000000 },
+      'demo-token'
+    );
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -95,6 +102,14 @@ export default function AuthPage() {
             {loading ? 'Memproses...' : mode === 'login' ? 'Masuk' : 'Buat Akun'}
           </button>
         </form>
+
+        {import.meta.env.DEV && (
+          <div style={{ marginTop: 14 }}>
+            <button type="button" className="btn-secondary" onClick={handleDemo} disabled={loading} style={{ width: '100%' }}>
+              Masuk sebagai Demo (tanpa backend)
+            </button>
+          </div>
+        )}
 
         <p className="auth-switch">
           {mode === 'login' ? (

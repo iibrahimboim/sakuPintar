@@ -1,6 +1,9 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import db from './config/db.js';
 import authRoutes from './routes/authRoutes.js';
 import userRoutes from './routes/userRoutes.js';
@@ -12,9 +15,23 @@ import budgetRoutes from './routes/budgetRoutes.js';
 dotenv.config();
 
 const app = express();
+const isProd = process.env.NODE_ENV === 'production';
 
-app.use(cors());
+const allowedOrigins = (process.env.CORS_ORIGINS || '')
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean);
+
+app.use(cors({
+  origin: allowedOrigins.length ? allowedOrigins : true,
+  credentials: true,
+}));
 app.use(express.json());
+
+function errorResponse(res, status, message, error) {
+  if (isProd) return res.status(status).json({ message });
+  return res.status(status).json({ message, error });
+}
 
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
@@ -27,18 +44,51 @@ app.get('/', (req, res) => {
   res.json({ message: 'Welcome to SakuPintar API' });
 });
 
+async function initSchema() {
+  const __filename = fileURLToPath(import.meta.url);
+  const __dirname = path.dirname(__filename);
+  const schemaPath = path.resolve(__dirname, './db/schema.sql');
+  const sql = await fs.readFile(schemaPath, 'utf8');
+  const statements = sql
+    .split(';')
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  for (const stmt of statements) {
+    // schema.sql uses CREATE TABLE IF NOT EXISTS so it's safe to run on startup
+    await db.query(stmt);
+  }
+}
+
 // Test DB Connection
 app.get('/api/test-db', async (req, res) => {
   try {
     const [rows] = await db.query('SELECT 1 + 1 AS solution');
     res.json({ message: 'Database connected successfully', data: rows });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    const message =
+      error?.code === 'ECONNREFUSED'
+        ? 'Tidak bisa konek ke MySQL. Pastikan MySQL service berjalan (localhost:3306).'
+        : (error?.message || String(error) || 'Database connection failed');
+    return errorResponse(res, 500, message, error);
   }
 });
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
+  try {
+    if (!process.env.JWT_SECRET) {
+      console.warn('JWT_SECRET is not set. Auth will fail until it is provided.');
+    }
+    await initSchema();
+    console.log('Database schema initialized');
+  } catch (e) {
+    const msg =
+      e?.code === 'ECONNREFUSED'
+        ? 'Failed to initialize schema: cannot connect to MySQL (ECONNREFUSED).'
+        : `Failed to initialize schema: ${e?.message || e}`;
+    console.error(msg);
+  }
   console.log(`Server is running on port ${PORT}`);
 });

@@ -29,7 +29,7 @@ export default function Sidebar({ activePage, onNavigate }) {
 
       {mobileOpen && (
         <div className="sidebar-overlay" onClick={() => setMobileOpen(false)} />
-      )}
+      )}                                                                            
 
       <aside className={`sidebar ${mobileOpen ? 'mobile-open' : ''}`}>
         <div className="sidebar-brand">

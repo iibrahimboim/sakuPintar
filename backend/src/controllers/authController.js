@@ -2,6 +2,11 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import db from '../config/db.js';
 
+function toSafeErrorMessage(error, fallback) {
+  if (error?.code === 'ECONNREFUSED') return 'Tidak bisa konek ke MySQL. Pastikan MySQL service berjalan (localhost:3306).';
+  return error?.message || String(error) || fallback;
+}
+
 export const register = async (req, res) => {
   const { name, email, password } = req.body;
   try {
@@ -20,7 +25,7 @@ export const register = async (req, res) => {
 
     res.status(201).json({ message: 'User registered successfully', userId: result.insertId });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ message: toSafeErrorMessage(error, 'Register failed'), error });
   }
 };
 
@@ -42,6 +47,6 @@ export const login = async (req, res) => {
 
     res.json({ message: 'Login successful', token, user: { id: user.id, name: user.name, email: user.email, total_balance: user.total_balance, limit: user.limit } });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ message: toSafeErrorMessage(error, 'Login failed'), error });
   }
 };
