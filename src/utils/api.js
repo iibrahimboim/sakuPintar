@@ -12,7 +12,17 @@ async function request(path, options = {}) {
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
     ...options.headers,
   };
-  const res = await fetch(`${BASE_URL}${path}`, { ...options, headers });
+  const url = `${BASE_URL}${path}`;
+  let res;
+  try {
+    res = await fetch(url, { ...options, headers });
+  } catch (e) {
+    const hint =
+      typeof window !== 'undefined' && window.location?.origin
+        ? ` Coba buka ${window.location.origin}/api/test-db — kalau gagal, cek vercel.json proxy ke Railway atau set VITE_API_BASE_URL lalu redeploy.`
+        : '';
+    throw new Error(`Gagal konek ke API (${url}).${hint}`);
+  }
   let data = null;
   try {
     data = await res.json();
