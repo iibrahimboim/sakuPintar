@@ -39,8 +39,10 @@ Backend supports both.
 You still need to set:
 - `JWT_SECRET`: any long random string
 - `NODE_ENV=production`
-- `CORS_ORIGINS`: comma-separated frontend domains
-  - Example: `https://your-frontend.vercel.app`
+- **CORS (frontend di Vercel)** — pilih salah satu:
+  - `CORS_ALLOW_VERCEL=true` (atau `1`): izinkan semua origin `https://*.vercel.app` (paling gampang)
+  - atau `CORS_ORIGINS`: domain frontend persis, comma-separated  
+    - Example: `https://your-frontend.vercel.app`
 
 ### 3) Schema initialization
 On startup, the server will try to run `src/db/schema.sql` (uses `CREATE TABLE IF NOT EXISTS`).

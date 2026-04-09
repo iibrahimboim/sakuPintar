@@ -1,5 +1,17 @@
-// Configure via `.env` (VITE_API_BASE_URL). Defaults to Vite dev proxy `/api`.
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
+// VITE_API_BASE_URL (e.g. https://xxx.up.railway.app/api) — wajib di Vercel kalau tidak pakai fallback di bawah.
+const DEFAULT_VERCEL_API = 'https://sakupintar-production.up.railway.app/api';
+
+function getBaseUrl() {
+  const fromEnv = import.meta.env.VITE_API_BASE_URL;
+  if (fromEnv) return String(fromEnv).replace(/\/$/, '');
+  if (import.meta.env.PROD && typeof window !== 'undefined') {
+    const h = window.location.hostname;
+    if (h === 'vercel.app' || h.endsWith('.vercel.app')) return DEFAULT_VERCEL_API;
+  }
+  return '/api';
+}
+
+const BASE_URL = getBaseUrl();
 
 function getToken() {
   return localStorage.getItem('token');
@@ -19,7 +31,7 @@ async function request(path, options = {}) {
   } catch (e) {
     const hint =
       typeof window !== 'undefined' && window.location?.origin
-        ? ` Coba buka ${window.location.origin}/api/test-db — kalau gagal, cek vercel.json proxy ke Railway atau set VITE_API_BASE_URL lalu redeploy.`
+        ? ` Pastikan backend Railway jalan + CORS (set CORS_ALLOW_VERCEL=1 di Railway). URL API: ${url}`
         : '';
     throw new Error(`Gagal konek ke API (${url}).${hint}`);
   }

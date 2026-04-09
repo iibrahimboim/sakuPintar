@@ -22,8 +22,32 @@ const allowedOrigins = (process.env.CORS_ORIGINS || '')
   .map((s) => s.trim())
   .filter(Boolean);
 
+const allowVercelHosts =
+  process.env.CORS_ALLOW_VERCEL === '1' || process.env.CORS_ALLOW_VERCEL === 'true';
+
+function corsOrigin(origin, callback) {
+  if (!origin) return callback(null, true);
+
+  if (allowedOrigins.includes(origin)) return callback(null, true);
+
+  if (allowVercelHosts) {
+    try {
+      const { hostname } = new URL(origin);
+      if (hostname === 'vercel.app' || hostname.endsWith('.vercel.app')) {
+        return callback(null, true);
+      }
+    } catch {
+      // ignore invalid origin
+    }
+  }
+
+  if (allowedOrigins.length === 0) return callback(null, true);
+
+  callback(null, false);
+}
+
 app.use(cors({
-  origin: allowedOrigins.length ? allowedOrigins : true,
+  origin: corsOrigin,
   credentials: true,
 }));
 app.use(express.json());
