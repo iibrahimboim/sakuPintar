@@ -6,7 +6,7 @@ function getBaseUrl() {
   if (fromEnv) return String(fromEnv).replace(/\/$/, '');
   if (import.meta.env.PROD && typeof window !== 'undefined') {
     const h = window.location.hostname;
-    if (h === 'railway.app' || h.endsWith('.railway.app')) return DEFAULT_VERCEL_API;
+    if (h === 'vercel.app' || h.endsWith('.vercel.app')) return DEFAULT_VERCEL_API;
   }
   return '/api';
 }
