@@ -30,14 +30,20 @@ function requiredEnv(name, fallbacks = []) {
 const databaseUrl = process.env.DATABASE_URL || process.env.MYSQL_URL;
 
 const pool = databaseUrl
-  ? mysql.createPool(databaseUrl)
+  ? mysql.createPool({
+      uri: databaseUrl,
+      ssl: boolEnv('DB_SSL') ? { rejectUnauthorized: false } : undefined,
+      waitForConnections: true,
+      connectionLimit: 10,
+      queueLimit: 0,
+    })
   : mysql.createPool({
       host: requiredEnv('DB_HOST', ['MYSQLHOST']),
       port: Number(getEnv('DB_PORT', ['MYSQLPORT']) || 3306),
       user: requiredEnv('DB_USER', ['MYSQLUSER']),
       password: getEnv('DB_PASSWORD', ['MYSQLPASSWORD']) || '',
       database: requiredEnv('DB_NAME', ['MYSQLDATABASE']),
-      ssl: boolEnv('DB_SSL') ? {} : undefined,
+      ssl: boolEnv('DB_SSL') ? { rejectUnauthorized: false } : undefined,
       waitForConnections: true,
       connectionLimit: 10,
       queueLimit: 0,
