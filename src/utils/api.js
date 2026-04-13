@@ -1,3 +1,5 @@
+// Railway backend URL - hardcoded for production reliability
+// Do NOT change this to localhost - that will break Vercel deployment
 const BASE_URL = 'https://sakupintar-production.up.railway.app/api';
 
 function getToken() {
